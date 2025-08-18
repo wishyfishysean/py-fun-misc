@@ -1,0 +1,50 @@
+import cv2
+import imutils
+import datetime
+
+# Load cascade
+gun_cascade = cv2.CascadeClassifier('cascade.xml')
+if gun_cascade.empty():
+    raise IOError("Failed to load cascade classifier. Check path.")
+
+# Open webcam
+camera = cv2.VideoCapture(0)
+if not camera.isOpened():
+    raise IOError("Cannot open webcam")
+
+while True:
+    ret, frame = camera.read()
+    if not ret or frame is None:
+        break
+
+    frame = imutils.resize(frame, width=500)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Detect guns
+    gun = gun_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=20, minSize=(100, 100))
+    gun_exist = len(gun) > 0
+
+    # Draw detections
+    for (x, y, w, h) in gun:
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+
+    # Add timestamp
+    timestamp = datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S %p")
+    cv2.putText(frame, timestamp, (10, frame.shape[0] - 10),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+
+    # Alerts
+    if gun_exist:
+        cv2.putText(frame, "ALERT: Gun Detected!", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        print("Gun detected")
+
+    # Show feed
+    cv2.imshow("Security Feed", frame)
+
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('q'):
+        break
+
+camera.release()
+cv2.destroyAllWindows()
