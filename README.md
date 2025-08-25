@@ -1,5 +1,8 @@
 # py-fun-misc
 Misc python projects to use for resume building
+Plagiarism (Plague) detection using string and document - document one is basically strings from documents. It works??
+
+Rock, paper scissors....does game pretty well, maybe make a ui for it??
 
 Gun-detect:
 Built a python script for a gun detection program, using openCV.
