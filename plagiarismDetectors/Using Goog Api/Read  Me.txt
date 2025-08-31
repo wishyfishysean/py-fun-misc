@@ -1,0 +1,7 @@
+Google Search API for plagiarism detection
+
+take small chunks of text (like sentences or 50-word blocks)
+query Google for exact phrases <-- this  is the slow part! --> check how many hits match the text
+
+Pros: No hosting required, uses real web data.
+Cons: APIs may be paid; search engines can block frequent automated requests.
