@@ -1,0 +1,2 @@
+Read Me File for Face Detector using DNN from OpenCV
+PSA: HEAVY USAGE of GPTs in order to fix my code.
