@@ -1,0 +1,9 @@
+Warning: Some content has been AI generated or debugged.
+
+Idea: build a simple Image Classification & Organizer System in Python that:
+
+ - Detects images added to a folder (or manually uploaded).
+ - Classifies them by type/content (e.g., cats, dogs, cars, etc.) using a pre-trained model.
+ - Automatically renames and moves them into matching folders.
+
+**Use lightweight and easy-to-install libraries, not heavy frameworks.
