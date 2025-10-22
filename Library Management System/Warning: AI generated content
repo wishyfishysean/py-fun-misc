@@ -1,0 +1,198 @@
+## Library Management System - Complete Python Application
+
+Build a fully structured, production-ready Library Management System in Python with the following specifications:
+
+## Core Features
+
+### 1. User Management
+- Multiple user types: Librarian (admin) and Member (regular users)
+- User registration, login, and authentication
+- User profiles with borrowing history
+- Password hashing and security
+
+### 2. Book Management
+- Add, edit, delete, and search books
+- Book attributes: ISBN, title, author, publisher, year, genre, quantity, available copies
+- Book categorization and tagging
+- Track book condition and location
+
+### 3. Borrowing System
+- Check out books (with due dates)
+- Return books (with late fee calculation)
+- Renew borrowed books
+- Borrowing limits per user
+- Reservation system for unavailable books
+- Overdue notifications
+
+### 4. Search & Discovery
+- Search by title, author, ISBN, genre
+- Advanced filtering options
+- Sort by various criteria
+- Popular books and recommendations
+
+### 5. Reporting & Analytics
+- Most borrowed books
+- User borrowing statistics
+- Overdue books report
+- Inventory status
+- Revenue from late fees
+
+## Technical Requirements
+
+### Project Structure
+```
+library_management_system/
+├── src/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   ├── book.py
+│   │   ├── transaction.py
+│   │   └── reservation.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── auth_service.py
+│   │   ├── book_service.py
+│   │   ├── borrowing_service.py
+│   │   └── report_service.py
+│   ├── repositories/
+│   │   ├── __init__.py
+│   │   ├── user_repository.py
+│   │   ├── book_repository.py
+│   │   └── transaction_repository.py
+│   ├── ui/
+│   │   ├── __init__.py
+│   │   ├── cli.py
+│   │   └── menu.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── validators.py
+│   │   ├── formatters.py
+│   │   └── date_helpers.py
+│   └── database/
+│       ├── __init__.py
+│       ├── db_manager.py
+│       └── migrations.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_models.py
+│   ├── test_services.py
+│   └── test_repositories.py
+├── config/
+│   ├── __init__.py
+│   ├── settings.py
+│   └── config.yaml
+├── data/
+│   └── library.db
+├── logs/
+├── docs/
+│   ├── API.md
+│   ├── USER_GUIDE.md
+│   └── ARCHITECTURE.md
+├── requirements.txt
+├── setup.py
+├── README.md
+├── .env.example
+└── .gitignore
+```
+
+### Architecture & Design Patterns
+- **Repository Pattern**: For data access abstraction
+- **Service Layer**: Business logic separation
+- **MVC Pattern**: Clear separation of concerns
+- **Dependency Injection**: Loose coupling between components
+- **SOLID Principles**: Throughout the codebase
+
+### Database
+- Use SQLite for simplicity (easily upgradeable to PostgreSQL/MySQL)
+- Implement proper schema with relationships
+- Include database migrations
+- Connection pooling and transaction management
+- Data validation and constraints
+
+### Configuration Management
+- Environment variables for sensitive data (.env file)
+- YAML/JSON configuration files for app settings
+- Separate configs for development, testing, production
+- Configurable settings: late fee rates, borrowing limits, due date periods
+
+### Error Handling & Logging
+- Custom exception classes for different error types
+- Comprehensive try-catch blocks
+- Rotating file logs with different levels (DEBUG, INFO, WARNING, ERROR)
+- User-friendly error messages
+- Audit trail for critical operations
+
+### Testing
+- Unit tests for all models and services
+- Integration tests for database operations
+- Test fixtures and mock data
+- pytest framework with coverage reporting
+- Aim for >80% code coverage
+
+### Security
+- Password hashing using bcrypt or argon2
+- Input validation and sanitization
+- SQL injection prevention
+- Session management
+- Rate limiting for failed login attempts
+
+### CLI Interface
+- Clean, intuitive menu system
+- Color-coded output (using colorama or rich)
+- Input validation with helpful prompts
+- Table formatting for data display (using tabulate or rich)
+- Progress indicators for long operations
+
+### Code Quality
+- Type hints throughout the codebase
+- Docstrings for all classes and functions (Google or NumPy style)
+- PEP 8 compliance
+- Meaningful variable and function names
+- Code comments for complex logic
+
+### Dependencies (requirements.txt should include)
+- SQLAlchemy (ORM)
+- python-dotenv (environment variables)
+- bcrypt or argon2-cffi (password hashing)
+- PyYAML (configuration)
+- rich or colorama (CLI formatting)
+- pytest (testing)
+- pytest-cov (coverage)
+- python-dateutil (date handling)
+
+### Additional Features to Implement
+- Data export (CSV, JSON)
+- Backup and restore functionality
+- Email notifications (optional, using SMTP)
+- Fine/penalty management
+- Book recommendations based on history
+- Multi-library support (future enhancement)
+
+### Documentation Requirements
+- README with installation and usage instructions
+- API documentation for all public methods
+- User guide with screenshots/examples
+- Architecture documentation explaining design decisions
+- Contributing guidelines
+
+### Deliverables
+1. Complete, working application
+2. Comprehensive test suite
+3. Sample data for demonstration
+4. All documentation
+5. Installation script or detailed setup instructions
+
+## Implementation Guidelines
+- Start with core models and database schema
+- Implement repository layer for data access
+- Build service layer with business logic
+- Create CLI interface
+- Add authentication and authorization
+- Implement all CRUD operations
+- Add advanced features (search, reports, reservations)
+- Write comprehensive tests
+- Polish UI/UX and add error handling
+- Complete documentation
