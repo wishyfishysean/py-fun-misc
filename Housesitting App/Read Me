@@ -1,0 +1,35 @@
+## House Sitting App - fully self-contained version
+
+I wanted to build a fully self-contained scheduling app for my housesitting side-job. 
+The app was written using Python, HTML, CSS and JavaScript and runs as a single executablewith a GUI interface:
+  - no external dependencies required beyond what’s included in the app.
+
+# Requirements:
+
+Calendar & Booking System:
+
+ - A calendar view to see all booked days.
+ - Ability to add, edit, or remove bookings.
+ - Each booking should include a notes section for details like petcare, keys, alarms, cameras, etc.
+
+Data Storage:
+
+ - Store bookings locally (e.g., in a JSON, SQLite, or similar embedded database) so the app can run offline.
+
+User Interface:
+
+ - Clean and intuitive GUI built with HTML/CSS/JS inside a Python wrapper (like PyWebView, Tkinter + webview, or Electron-like setup using Python).
+ - Calendar view should show booked days in a visually distinct way.
+ - Clicking a day should open a modal or panel showing booking details and notes.
+
+Additional Features:
+
+ - Export bookings to CSV or PDF for offline reference.
+ - Search or filter bookings by date or client.
+ - Should be lightweight and simple to use.
+
+Deliverables:
+
+  - A Python packaged executable that can be run on Linux - used PyInstaller for this
+  - Fully working GUI with all features above.
+  - Well-documented code so future edits or feature additions are easy.
