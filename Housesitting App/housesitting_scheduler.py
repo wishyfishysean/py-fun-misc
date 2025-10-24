@@ -3,11 +3,10 @@ Housesitting Scheduler App
 A fully functional offline scheduling application for managing housesitting bookings.
 
 Requirements:
-- Claude for Assisstance and Code checking
 - Python 3.7+
 - pip install webview
 
-To run (at your own risk, not sure if all syntax is fixed)
+To run:
     python housesitting_scheduler.py
 
 To create executable:
@@ -15,7 +14,7 @@ To create executable:
     pyinstaller --onefile --windowed --name "HousesitScheduler" housesitting_scheduler.py
 
 Author: Claude & Me
-Version: 1.0
+Version: 2.0
 """
 
 import webview
@@ -67,7 +66,7 @@ class BookingManager:
             print(f"Error saving bookings: {e}")
             return False
     
-    def add_booking(self, date: str, client: str, notes: str) -> Dict:
+    def add_booking(self, date: str, client: str, notes: str, price: str = "") -> Dict:
         """Add a new booking"""
         booking_id = f"booking_{datetime.now().timestamp()}"
         self.bookings[date] = {
@@ -75,16 +74,18 @@ class BookingManager:
             'date': date,
             'client': client,
             'notes': notes,
+            'price': price,
             'created': datetime.now().isoformat()
         }
         self._save_bookings()
         return self.bookings[date]
     
-    def update_booking(self, date: str, client: str, notes: str) -> Optional[Dict]:
+    def update_booking(self, date: str, client: str, notes: str, price: str = "") -> Optional[Dict]:
         """Update an existing booking"""
         if date in self.bookings:
             self.bookings[date]['client'] = client
             self.bookings[date]['notes'] = notes
+            self.bookings[date]['price'] = price
             self.bookings[date]['modified'] = datetime.now().isoformat()
             self._save_bookings()
             return self.bookings[date]
@@ -121,13 +122,14 @@ class BookingManager:
         try:
             with open(filepath, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                writer.writerow(['Date', 'Client', 'Notes', 'Created'])
+                writer.writerow(['Date', 'Client', 'Price', 'Notes', 'Created'])
                 
                 for date in sorted(self.bookings.keys()):
                     booking = self.bookings[date]
                     writer.writerow([
                         booking['date'],
                         booking['client'],
+                        booking.get('price', ''),
                         booking['notes'],
                         booking.get('created', '')
                     ])
@@ -148,14 +150,14 @@ class API:
         """Get all bookings as JSON string"""
         return json.dumps(self.manager.get_all_bookings())
     
-    def add_booking(self, date: str, client: str, notes: str) -> str:
+    def add_booking(self, date: str, client: str, notes: str, price: str = "") -> str:
         """Add a new booking"""
-        result = self.manager.add_booking(date, client, notes)
+        result = self.manager.add_booking(date, client, notes, price)
         return json.dumps({'success': True, 'booking': result})
     
-    def update_booking(self, date: str, client: str, notes: str) -> str:
+    def update_booking(self, date: str, client: str, notes: str, price: str = "") -> str:
         """Update an existing booking"""
-        result = self.manager.update_booking(date, client, notes)
+        result = self.manager.update_booking(date, client, notes, price)
         if result:
             return json.dumps({'success': True, 'booking': result})
         return json.dumps({'success': False, 'error': 'Booking not found'})
@@ -202,24 +204,153 @@ HTML_CONTENT = """
             box-sizing: border-box;
         }
         
+        :root {
+            --primary-color: #667eea;
+            --primary-hover: #5568d3;
+            --secondary-color: #764ba2;
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --text-color: #333;
+            --bg-color: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --border-color: #e9ecef;
+            --card-bg: #ffffff;
+            --shadow: rgba(0,0,0,0.1);
+            --shadow-hover: rgba(0,0,0,0.15);
+        }
+        
+        body.dark-mode {
+            --primary-color: #7c93ee;
+            --primary-hover: #8da4f0;
+            --bg-gradient-start: #4a5f9f;
+            --bg-gradient-end: #5a3d7a;
+            --text-color: #e0e0e0;
+            --bg-color: #1a1a1a;
+            --bg-secondary: #2a2a2a;
+            --border-color: #3a3a3a;
+            --card-bg: #252525;
+            --shadow: rgba(0,0,0,0.3);
+            --shadow-hover: rgba(0,0,0,0.5);
+        }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
-            padding: 20px;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: var(--card-bg);
+            border-right: 2px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 2px 0 10px var(--shadow);
+        }
+        
+        .sidebar-header {
+            padding: 25px;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: white;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .bookings-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .booking-item {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .booking-item:hover {
+            border-color: var(--primary-color);
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px var(--shadow-hover);
+        }
+        
+        .booking-date {
+            font-weight: 700;
+            font-size: 1.1em;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .booking-client {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .booking-summary {
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.8;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .booking-price {
+            font-size: 0.9em;
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .no-bookings {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-color);
+            opacity: 0.6;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin: 20px;
+            background: var(--card-bg);
             border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px var(--shadow);
             overflow: hidden;
         }
         
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             color: white;
             padding: 30px;
             text-align: center;
@@ -237,8 +368,8 @@ HTML_CONTENT = """
         
         .controls {
             padding: 20px 30px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
+            background: var(--bg-secondary);
+            border-bottom: 2px solid var(--border-color);
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
@@ -253,16 +384,83 @@ HTML_CONTENT = """
         .search-box input {
             width: 100%;
             padding: 12px 20px;
-            border: 2px solid #dee2e6;
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             font-size: 1em;
             transition: all 0.3s;
+            background: var(--card-bg);
+            color: var(--text-color);
         }
         
         .search-box input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .theme-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .color-picker-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .color-picker-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px var(--shadow-hover);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 26px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
         }
         
         .btn {
@@ -276,14 +474,19 @@ HTML_CONTENT = """
         }
         
         .btn-primary {
-            background: #667eea;
+            background: var(--primary-color);
             color: white;
         }
         
         .btn-primary:hover {
-            background: #5568d3;
+            background: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px var(--shadow-hover);
+        }
+        
+        .btn-large {
+            padding: 15px 30px;
+            font-size: 1.2em;
         }
         
         .btn-secondary {
@@ -294,7 +497,7 @@ HTML_CONTENT = """
         .btn-secondary:hover {
             background: #5a6268;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+            box-shadow: 0 5px 15px var(--shadow-hover);
         }
         
         .btn-danger {
@@ -306,17 +509,41 @@ HTML_CONTENT = """
             background: #c82333;
         }
         
+        .quick-add-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 20px var(--shadow-hover);
+            z-index: 100;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .quick-add-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+        
         .calendar-nav {
             padding: 20px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #fff;
+            background: var(--card-bg);
         }
         
         .calendar-nav h2 {
             font-size: 1.8em;
-            color: #333;
+            color: var(--text-color);
         }
         
         .nav-buttons {
@@ -326,7 +553,7 @@ HTML_CONTENT = """
         
         .nav-btn {
             padding: 8px 16px;
-            background: #667eea;
+            background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 6px;
@@ -336,11 +563,13 @@ HTML_CONTENT = """
         }
         
         .nav-btn:hover {
-            background: #5568d3;
+            background: var(--primary-hover);
         }
         
         .calendar {
             padding: 30px;
+            flex: 1;
+            overflow-y: auto;
         }
         
         .calendar-grid {
@@ -353,28 +582,28 @@ HTML_CONTENT = """
             text-align: center;
             font-weight: 600;
             padding: 15px;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             border-radius: 8px;
-            color: #495057;
+            color: var(--text-color);
         }
         
         .day {
             aspect-ratio: 1;
-            border: 2px solid #e9ecef;
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             padding: 10px;
             cursor: pointer;
             transition: all 0.3s;
-            background: white;
+            background: var(--card-bg);
             display: flex;
             flex-direction: column;
             position: relative;
         }
         
         .day:hover {
-            border-color: #667eea;
+            border-color: var(--primary-color);
             transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px var(--shadow-hover);
         }
         
         .day.other-month {
@@ -386,10 +615,15 @@ HTML_CONTENT = """
             background: #d4edda;
         }
         
+        body.dark-mode .day.today {
+            background: #1e4d2b;
+            border-color: #5cb85c;
+        }
+        
         .day.booked {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             color: white;
-            border-color: #667eea;
+            border-color: var(--primary-color);
         }
         
         .day-number {
@@ -423,17 +657,17 @@ HTML_CONTENT = """
         }
         
         .modal-content {
-            background: white;
+            background: var(--card-bg);
             border-radius: 15px;
             width: 90%;
             max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px var(--shadow);
         }
         
         .modal-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             color: white;
             padding: 25px;
             border-radius: 15px 15px 0 0;
@@ -455,35 +689,37 @@ HTML_CONTENT = """
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #333;
+            color: var(--text-color);
         }
         
         .form-group input,
         .form-group textarea {
             width: 100%;
             padding: 12px;
-            border: 2px solid #dee2e6;
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             font-size: 1em;
             font-family: inherit;
             transition: all 0.3s;
+            background: var(--card-bg);
+            color: var(--text-color);
         }
         
         .form-group textarea {
-            min-height: 150px;
+            min-height: 120px;
             resize: vertical;
         }
         
         .form-group input:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
         .modal-footer {
             padding: 20px 30px;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             display: flex;
             gap: 10px;
             justify-content: flex-end;
@@ -515,7 +751,7 @@ HTML_CONTENT = """
         
         .stats {
             padding: 20px 30px;
-            background: #f8f9fa;
+            background: var(--bg-secondary);
             display: flex;
             gap: 20px;
             justify-content: space-around;
@@ -523,68 +759,109 @@ HTML_CONTENT = """
         }
         
         .stat-card {
-            background: white;
+            background: var(--card-bg);
             padding: 20px;
             border-radius: 10px;
             text-align: center;
             min-width: 150px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px var(--shadow);
         }
         
         .stat-card .number {
             font-size: 2.5em;
             font-weight: 700;
-            color: #667eea;
+            color: var(--primary-color);
         }
         
         .stat-card .label {
-            color: #6c757d;
+            color: var(--text-color);
+            opacity: 0.7;
             margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                max-height: 40vh;
+            }
+            
+            .app-container {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🏠 Housesitting Scheduler</h1>
-            <p>Manage your housesitting bookings with ease</p>
-        </div>
-        
-        <div class="stats">
-            <div class="stat-card">
-                <div class="number" id="totalBookings">0</div>
-                <div class="label">Total Bookings</div>
+    <div class="app-container">
+        <!-- Sidebar with bookings list -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Upcoming Bookings</h2>
+                <p id="bookingCount">0 bookings scheduled</p>
             </div>
-            <div class="stat-card">
-                <div class="number" id="thisMonthBookings">0</div>
-                <div class="label">This Month</div>
+            <div class="bookings-list" id="bookingsList">
+                <div class="no-bookings">No bookings yet. Click a day on the calendar or use the + button to add one.</div>
             </div>
         </div>
         
-        <div class="controls">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="🔍 Search bookings by client or notes...">
-            </div>
-            <button class="btn btn-primary" onclick="app.exportCSV()">📥 Export CSV</button>
-            <button class="btn btn-secondary" onclick="app.showToday()">📅 Today</button>
-        </div>
-        
-        <div class="calendar-nav">
-            <div class="nav-buttons">
-                <button class="nav-btn" onclick="app.prevMonth()">◀ Previous</button>
-            </div>
-            <h2 id="currentMonth">Loading...</h2>
-            <div class="nav-buttons">
-                <button class="nav-btn" onclick="app.nextMonth()">Next ▶</button>
-            </div>
-        </div>
-        
-        <div class="calendar">
-            <div class="calendar-grid" id="calendar">
-                <!-- Calendar will be generated here -->
+        <!-- Main content area -->
+        <div class="main-content">
+            <div class="container">
+                <div class="header">
+                    <h1>Housesitting Scheduler</h1>
+                    <p>Manage Housesitting Bookings & Duties</p>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="number" id="totalBookings">0</div>
+                        <div class="label">Total Bookings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="number" id="thisMonthBookings">0</div>
+                        <div class="label">This Month</div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search bookings by client or notes...">
+                    </div>
+                    
+                    <div class="theme-controls">
+                        <input type="color" id="colorPicker" class="color-picker-btn" title="Change theme color">
+                        
+                        <label class="toggle-switch" title="Dark mode">
+                            <input type="checkbox" id="darkModeToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="app.exportCSV()">Export CSV</button>
+                    <button class="btn btn-secondary" onclick="app.showToday()">Today</button>
+                </div>
+                
+                <div class="calendar-nav">
+                    <div class="nav-buttons">
+                        <button class="nav-btn" onclick="app.prevMonth()">Previous</button>
+                    </div>
+                    <h2 id="currentMonth">Loading...</h2>
+                    <div class="nav-buttons">
+                        <button class="nav-btn" onclick="app.nextMonth()">Next</button>
+                    </div>
+                </div>
+                
+                <div class="calendar">
+                    <div class="calendar-grid" id="calendar">
+                        <!-- Calendar will be generated here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    
+    <!-- Quick add button -->
+    <button class="btn btn-primary quick-add-btn" onclick="app.quickAddBooking()" title="Quick add booking">+</button>
     
     <!-- Booking Modal -->
     <div class="modal" id="bookingModal">
@@ -599,7 +876,7 @@ HTML_CONTENT = """
                 <form id="bookingForm">
                     <div class="form-group">
                         <label for="bookingDate">Date</label>
-                        <input type="date" id="bookingDate" required readonly>
+                        <input type="date" id="bookingDate" required>
                     </div>
                     
                     <div class="form-group">
@@ -608,8 +885,13 @@ HTML_CONTENT = """
                     </div>
                     
                     <div class="form-group">
-                        <label for="bookingNotes">Notes</label>
-                        <textarea id="bookingNotes" placeholder="Pet care instructions, keys location, alarm codes, camera info, etc."></textarea>
+                        <label for="pricePerNight">Price per Night</label>
+                        <input type="text" id="pricePerNight" placeholder="e.g., R500 or $50">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bookingNotes">Duties & Notes</label>
+                        <textarea id="bookingNotes" placeholder="Pet care instructions, keys location, alarm codes, camera info, daily duties, etc."></textarea>
                     </div>
                 </form>
             </div>
@@ -633,7 +915,9 @@ HTML_CONTENT = """
                 await this.loadBookings();
                 this.renderCalendar();
                 this.updateStats();
+                this.updateSidebar();
                 this.setupEventListeners();
+                this.loadThemePreferences();
             },
             
             // Load bookings from Python backend
@@ -657,6 +941,67 @@ HTML_CONTENT = """
                         this.searchBookings(e.target.value);
                     }, 300);
                 });
+                
+                // Dark mode toggle
+                const darkModeToggle = document.getElementById('darkModeToggle');
+                darkModeToggle.addEventListener('change', (e) => {
+                    this.toggleDarkMode(e.target.checked);
+                });
+                
+                // Color picker
+                const colorPicker = document.getElementById('colorPicker');
+                colorPicker.addEventListener('input', (e) => {
+                    this.changeThemeColor(e.target.value);
+                });
+            },
+            
+            // Load theme preferences from localStorage
+            loadThemePreferences() {
+                const darkMode = localStorage.getItem('darkMode') === 'true';
+                const themeColor = localStorage.getItem('themeColor');
+                
+                if (darkMode) {
+                    document.body.classList.add('dark-mode');
+                    document.getElementById('darkModeToggle').checked = true;
+                }
+                
+                if (themeColor) {
+                    this.changeThemeColor(themeColor);
+                    document.getElementById('colorPicker').value = themeColor;
+                }
+            },
+            
+            // Toggle dark mode
+            toggleDarkMode(enabled) {
+                if (enabled) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+                localStorage.setItem('darkMode', enabled);
+            },
+            
+            // Change theme color
+            changeThemeColor(color) {
+                const root = document.documentElement;
+                root.style.setProperty('--bg-gradient-start', color);
+                root.style.setProperty('--primary-color', color);
+                
+                // Calculate darker shade for gradient end
+                const darker = this.adjustColor(color, -20);
+                root.style.setProperty('--bg-gradient-end', darker);
+                root.style.setProperty('--primary-hover', darker);
+                
+                localStorage.setItem('themeColor', color);
+            },
+            
+            // Helper to adjust color brightness
+            adjustColor(color, amount) {
+                const num = parseInt(color.replace("#", ""), 16);
+                const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+                const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+                const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+                return "#" + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1);
             },
             
             // Search bookings
@@ -664,6 +1009,7 @@ HTML_CONTENT = """
                 if (!query.trim()) {
                     await this.loadBookings();
                     this.renderCalendar();
+                    this.updateSidebar();
                     return;
                 }
                 
@@ -671,9 +1017,58 @@ HTML_CONTENT = """
                     const result = await pywebview.api.search_bookings(query);
                     this.bookings = JSON.parse(result);
                     this.renderCalendar();
+                    this.updateSidebar();
                 } catch (error) {
                     console.error('Error searching bookings:', error);
                 }
+            },
+            
+            // Update sidebar with bookings list
+            updateSidebar() {
+                const bookingsList = document.getElementById('bookingsList');
+                const bookingCount = document.getElementById('bookingCount');
+                
+                const sortedDates = Object.keys(this.bookings).sort();
+                const count = sortedDates.length;
+                
+                bookingCount.textContent = count + ' booking' + (count !== 1 ? 's' : '') + ' scheduled';
+                
+                if (count === 0) {
+                    bookingsList.innerHTML = '<div class="no-bookings">No bookings yet. Click a day on the calendar or use the + button to add one.</div>';
+                    return;
+                }
+                
+                bookingsList.innerHTML = '';
+                
+                sortedDates.forEach(date => {
+                    const booking = this.bookings[date];
+                    const bookingItem = document.createElement('div');
+                    bookingItem.className = 'booking-item';
+                    
+                    const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    
+                    const summary = booking.notes ? booking.notes.substring(0, 50) + (booking.notes.length > 50 ? '...' : '') : 'No notes';
+                    
+                    let itemHTML = '<div class="booking-date">' + formattedDate + '</div>';
+                    itemHTML += '<div class="booking-client">' + booking.client + '</div>';
+                    if (booking.price) {
+                        itemHTML += '<div class="booking-price">' + booking.price + ' per night</div>';
+                    }
+                    itemHTML += '<div class="booking-summary">' + summary + '</div>';
+                    
+                    bookingItem.innerHTML = itemHTML;
+                    
+                    bookingItem.addEventListener('click', () => {
+                        this.openBookingModal(date, booking);
+                    });
+                    
+                    bookingsList.appendChild(bookingItem);
+                });
             },
             
             // Render the calendar
@@ -687,7 +1082,7 @@ HTML_CONTENT = """
                 // Update header
                 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
                                   'July', 'August', 'September', 'October', 'November', 'December'];
-                document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+                document.getElementById('currentMonth').textContent = monthNames[month] + ' ' + year;
                 
                 // Add day headers
                 const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -719,15 +1114,18 @@ HTML_CONTENT = """
                 }
                 
                 // Add next month's days
-                const totalCells = calendar.children.length - 7; // Subtract headers
-                const remainingCells = 42 - totalCells - 7; // 6 rows * 7 days - headers
+                const totalCells = calendar.children.length - 7;
+                const remainingCells = 42 - totalCells - 7;
                 for (let day = 1; day <= remainingCells; day++) {
                     this.createDayElement(day, month + 1, year, true);
                 }
             },
             
             // Create a day element
-            createDayElement(day, month, year, otherMonth = false, isToday = false) {
+            createDayElement(day, month, year, otherMonth, isToday) {
+                otherMonth = otherMonth || false;
+                isToday = isToday || false;
+                
                 const calendar = document.getElementById('calendar');
                 const dayEl = document.createElement('div');
                 dayEl.className = 'day';
@@ -736,46 +1134,57 @@ HTML_CONTENT = """
                 if (isToday) dayEl.classList.add('today');
                 
                 // Format date as YYYY-MM-DD
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
                 
                 // Check if this day has a booking
                 const booking = this.bookings[dateStr];
                 
                 if (booking) {
                     dayEl.classList.add('booked');
-                    dayEl.innerHTML = `
-                        <div class="day-number">${day}</div>
-                        <div class="day-client">${booking.client}</div>
-                    `;
+                    dayEl.innerHTML = '<div class="day-number">' + day + '</div><div class="day-client">' + booking.client + '</div>';
                 } else {
-                    dayEl.innerHTML = `<div class="day-number">${day}</div>`;
+                    dayEl.innerHTML = '<div class="day-number">' + day + '</div>';
                 }
                 
                 dayEl.addEventListener('click', () => this.openBookingModal(dateStr, booking));
                 calendar.appendChild(dayEl);
             },
             
+            // Quick add booking
+            quickAddBooking() {
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                this.openBookingModal(dateStr, null, false);
+            },
+            
             // Open booking modal
-            openBookingModal(date, booking = null) {
+            openBookingModal(date, booking, readonly) {
+                booking = booking || null;
+                readonly = readonly === undefined ? true : readonly;
+                
                 this.selectedDate = date;
                 const modal = document.getElementById('bookingModal');
                 const title = document.getElementById('modalTitle');
                 const dateInput = document.getElementById('bookingDate');
                 const clientInput = document.getElementById('clientName');
                 const notesInput = document.getElementById('bookingNotes');
+                const priceInput = document.getElementById('pricePerNight');
                 const deleteBtn = document.getElementById('deleteBtn');
                 
                 dateInput.value = date;
+                dateInput.readOnly = readonly && booking !== null;
                 
                 if (booking) {
                     title.textContent = 'Edit Booking';
                     clientInput.value = booking.client;
                     notesInput.value = booking.notes;
+                    priceInput.value = booking.price || '';
                     deleteBtn.style.display = 'block';
                 } else {
                     title.textContent = 'Add Booking';
                     clientInput.value = '';
                     notesInput.value = '';
+                    priceInput.value = '';
                     deleteBtn.style.display = 'none';
                 }
                 
@@ -787,6 +1196,9 @@ HTML_CONTENT = """
                 const modal = document.getElementById('bookingModal');
                 modal.classList.remove('active');
                 this.hideAlerts();
+                
+                // Reset date input readonly state
+                document.getElementById('bookingDate').readOnly = false;
             },
             
             // Save booking
@@ -794,9 +1206,15 @@ HTML_CONTENT = """
                 const date = document.getElementById('bookingDate').value;
                 const client = document.getElementById('clientName').value.trim();
                 const notes = document.getElementById('bookingNotes').value.trim();
+                const price = document.getElementById('pricePerNight').value.trim();
                 
                 if (!client) {
                     this.showError('Please enter a client name');
+                    return;
+                }
+                
+                if (!date) {
+                    this.showError('Please select a date');
                     return;
                 }
                 
@@ -805,9 +1223,9 @@ HTML_CONTENT = """
                     let result;
                     
                     if (existingBooking) {
-                        result = await pywebview.api.update_booking(date, client, notes);
+                        result = await pywebview.api.update_booking(date, client, notes, price);
                     } else {
-                        result = await pywebview.api.add_booking(date, client, notes);
+                        result = await pywebview.api.add_booking(date, client, notes, price);
                     }
                     
                     const data = JSON.parse(result);
@@ -817,6 +1235,7 @@ HTML_CONTENT = """
                         await this.loadBookings();
                         this.renderCalendar();
                         this.updateStats();
+                        this.updateSidebar();
                         
                         setTimeout(() => this.closeModal(), 1500);
                     } else {
@@ -844,6 +1263,7 @@ HTML_CONTENT = """
                         await this.loadBookings();
                         this.renderCalendar();
                         this.updateStats();
+                        this.updateSidebar();
                         
                         setTimeout(() => this.closeModal(), 1500);
                     } else {
@@ -862,7 +1282,7 @@ HTML_CONTENT = """
                     const data = JSON.parse(result);
                     
                     if (data.success) {
-                        alert(`Bookings exported successfully to:\n${data.filepath}`);
+                        alert('Bookings exported successfully to:\n' + data.filepath);
                     } else {
                         alert('Error exporting bookings');
                     }
@@ -899,7 +1319,7 @@ HTML_CONTENT = """
                 
                 let thisMonth = 0;
                 for (const date in this.bookings) {
-                    const bookingDate = new Date(date);
+                    const bookingDate = new Date(date + 'T00:00:00');
                     if (bookingDate.getMonth() === currentMonth && 
                         bookingDate.getFullYear() === currentYear) {
                         thisMonth++;
@@ -961,8 +1381,8 @@ def main():
         'Housesitting Scheduler',
         html=HTML_CONTENT,
         js_api=api,
-        width=1200,
-        height=800,
+        width=1400,
+        height=900,
         resizable=True
     )
     
