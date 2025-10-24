@@ -3,17 +3,18 @@ Housesitting Scheduler App
 A fully functional offline scheduling application for managing housesitting bookings.
 
 Requirements:
+- Claude for Assisstance and Code checking
 - Python 3.7+
 - pip install webview
 
-To run:
+To run (at your own risk, not sure if all syntax is fixed)
     python housesitting_scheduler.py
 
 To create executable:
     pip install pyinstaller
     pyinstaller --onefile --windowed --name "HousesitScheduler" housesitting_scheduler.py
 
-Author: Claude
+Author: Claude & Me
 Version: 1.0
 """
 
